@@ -1,0 +1,493 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-input/paper-input-container.html">
+<link rel="import" href="../paper-input/paper-input-error.html">
+<link rel="import" href="../paper-input/paper-input-behavior.html">
+<link rel="import" href="../iron-input/iron-input.html">
+<link rel="import" href="../paper-icon-button/paper-icon-button.html">
+
+<link href="../neon-animation/animations/fade-out-animation.html" rel="import">
+<link href="../neon-animation/animations/scale-up-animation.html" rel="import">
+
+<link rel="import" href="./paper-date-picker-dialog.html">
+
+<!--
+
+
+@demo demo/index.html
+-->
+
+<dom-module id="paper-date-input">
+	<template>
+		<style>
+			:host {
+				display: inline-block;
+				box-sizing: border-box;
+				min-width: 200px;
+			}
+			.main-container{
+				display: flex;
+			}
+			.main-container > input{
+				flex: 10;
+				width: 0px;
+				text-align: center;
+			}
+			.main-container > input.year{
+				flex: 10;
+			}
+			input[type=number]::-webkit-inner-spin-button,
+			input[type=number]::-webkit-outer-spin-button {
+				-webkit-appearance: none;
+				margin: 0;
+			}
+			input[type=number]{
+				-moz-appearance:textfield;
+			}
+
+			iron-icon{
+				width: 22px;
+				height: 24px;
+				box-sizing: border-box;
+				padding: 3px 1px 3px 1px;
+				color: rgba(0,0,0,.54);
+			}
+			.separator{
+				color: rgba(0,0,0,.32);
+			}
+		</style>
+
+		<style is="custom-style" include="paper-date-picker-dialog-style">
+			section {
+				margin: 24px;
+			}
+		</style>
+
+		<paper-input-container id="decorator" attr-for-value="id" always-float-label="{{floatLabel}}" invalid="[[invalid]]">
+			<label>{{label}}</label>
+			<div class="paper-input-input main-container">
+				<template is="dom-if" if="{{_equals(format, 'DMY')}}">
+					<input is="iron-input" type="number" bind-value="{{dateAsObject.day}}" class="day" min="1" max="31" on-focus="_handleInputFocus" on-blur="_handleInputBlur" on-keyup="_checkInputFieldSwitchPostKey" on-keydown="_checkInputFieldSwitchPreKey" data-order="1"></input>
+					<span class="separator" hidden$="{{!floatLabel}}">/</span>
+					<input is="iron-input" type="number" bind-value="{{dateAsObject.month}}" class="month" min="1" max="12" on-focus="_handleInputFocus" on-blur="_handleInputBlur" on-keyup="_checkInputFieldSwitchPostKey" on-keydown="_checkInputFieldSwitchPreKey" data-order="2"></input>
+					<span class="separator" hidden$="{{!floatLabel}}">/</span>
+					<input is="iron-input" type="number" bind-value="{{dateAsObject.year}}" class="year" min="-9999" max="9999" on-focus="_handleInputFocus" on-blur="_handleInputBlur" class="year" on-keyup="_checkInputFieldSwitchPostKey" on-keydown="_checkInputFieldSwitchPreKey" data-order="3"></input>
+				</template>
+				<template is="dom-if" if="{{_equals(format, 'YMD')}}">
+					<input is="iron-input" type="number" class="year"></input>
+					<span class="separator">/</span>
+					<input is="iron-input" type="number"></input>
+					<span class="separator">/</span>
+					<input is="iron-input" type="number"></input>
+				</template>
+			</div>
+			<div suffix>
+				<paper-date-picker-dialog id="picker" on-date-changed="_datePickerDateChanged" date="{{value}}"></paper-date-picker-dialog>
+				<iron-icon icon="event" on-tap="openDatePicker"></iron-icon>
+			</div>
+			<paper-input-error>{{errorMessage}}</paper-input-error>
+		</paper-input-container>
+	</template>
+
+	<script>
+		(function(){
+
+			var SELECTION_POINTS = {
+				MIDDLE: 1,
+				END: 2,
+				BEGINNING: 0,
+				MULTI_CHAR: -1
+			};
+
+			var chromeSucks = false;
+
+			Polymer({
+				is: 'paper-date-input',
+
+				properties: {
+					/**
+					 * Format of date input: DMY or YMD.
+					 *
+					 * MDY is **not** supported, as less than 5% of the world use it and it's a pain for the other 95%
+					 */
+					format: {
+						type: String,
+						value: 'DMY'
+					},
+					value: {
+						type: Date
+					},
+					dateAsObject: {
+						type: Object,
+						value: function(){
+							return {
+								day: undefined,
+								month: undefined,
+								year: undefined
+							};
+						}
+					},
+					invalid: {
+						type: Boolean
+					},
+					errorMessage: String,
+					label: {
+						type: String,
+						value: 'Pick a date...'
+					},
+					floatLabel: {
+						type: Boolean
+					}
+				},
+
+				behaviors:[
+					Polymer.PaperInputBehavior
+				],
+
+				observers: [
+					'_dateAsObjectChanged(dateAsObject.*)'
+				],
+
+				ready: function() {
+					this.set('floatLabel', false);
+				},
+
+				_datePickerDateChanged: function(ev){
+					this.value = ev.detail.value;
+					this._setDateAsObjectFromValue();
+				},
+				_setDateAsObjectFromValue: function(){
+					this.set('dateAsObject.day', this.value.getDate());
+					this.set('dateAsObject.month', this.value.getMonth() + 1);
+					this.set('dateAsObject.year', this.value.getFullYear());
+				},
+				_dateAsObjectChanged: function(ev){
+					var path = ev.path.split('.');
+					var value = parseInt(ev.value);
+					if(isNaN(value)){
+						return false;
+					}
+					if(path.length == 2){
+						if(typeof this.value === 'undefined'){
+							this.value = new Date(0);
+						}
+						if(path[1] == 'day'){
+							if(this.value.getDate() !== value){
+								this.value.setDate(value);
+							}
+						}
+						if(path[1] == 'month'){
+							if(this.value.getMonth() !== value - 1){
+								this.value.setMonth(value - 1);
+							}
+						}
+						if(path[1] == 'year'){
+							if(value.toString().length <= 2){
+								if(value < 50){
+									value += 2000;
+								}else{
+									value += 1900;
+								}
+							}
+							if(this.value.getFullYear() !== value){
+								this.value.setFullYear(value);
+							}
+						}
+
+						this.set('value', new Date(this.value));
+
+						/*
+						if(this.dateAsObject.day)
+							this.set('dateAsObject.day', this.value.getDate());
+						if(this.dateAsObject.month)
+							this.set('dateAsObject.month', this.value.getMonth() + 1);
+						if(this.dateAsObject.year)
+							this.set('dateAsObject.year', this.value.getFullYear());
+						*/
+					}else{
+						//set value from dateasobject from scratch
+					}
+					if(this.dateAsObject.day && this.dateAsObject.month && this.dateAsObject.year){
+						var maxDaysInMonth = new Date(this.dateAsObject.year, this.dateAsObject.month, 0).getDate();
+						Polymer.dom(this.root).querySelector('input.day').setAttribute('max', maxDaysInMonth);
+					}
+					this.validate();
+				},
+
+				validate: function(){
+
+					this.invalid = false;
+
+					var day = Polymer.dom(this.root).querySelector('input.day');
+					var month = Polymer.dom(this.root).querySelector('input.month');
+					var year = Polymer.dom(this.root).querySelector('input.year');
+
+					if(day.validity.rangeOverflow){
+						this.invalid = true;
+						if(month.value.length > 0){
+							var monthName = this.value.toLocaleString('en-us', { month: 'long' });
+							this.errorMessage = monthName + ' has ' + day.max + ' days';
+						}else{
+							this.errorMessage = 'Invalid day of month';
+						}
+					}
+
+					if(month.validity.rangeOverflow){
+						this.invalid = true;
+						this.errorMessage = 'Invalid month';
+					}
+
+					if(year.validity.rangeOverflow){
+						this.invalid = true;
+						this.errorMessage = 'Invalid year';
+					}
+
+							//Polymer.dom(this.root).querySelector('input.month').validity.rangeOverflow ||
+							//Polymer.dom(this.root).querySelector('input.year').validity.rangeOverflow;
+
+					//this.set('invalid', invalid);
+					return !this.invalid;
+				},
+
+				_checkInputFieldSwitchPostKey: function(ev){
+					//a debounce is terrible here, but it gets the job done
+					this.debounce('test', function(){
+						var code = ev.keyCode || ev.charCode;
+						//console.log('post key triggered for key', code, 'on', ev.target);
+
+						//48 till 57 are numbers
+						//191 is /
+						//32 is space
+						//8 is backspace
+						//13 enter
+						var target = ev.target;
+						//console.log(ev);
+						var value = ev.target.valueAsNumber;
+						var order = parseInt(target.dataset.order);
+
+
+						var max = ev.target.max;
+						/*
+						if(value > max){
+							this._updateValueAndPreserveCaret(target, max);
+						}
+
+						var min = ev.target.min;
+						if(value < min){
+							this._updateValueAndPreserveCaret(target, min);
+						}
+						*/
+
+						var selection = this._getSelectionPoint(target);
+
+						var atEnd = selection === SELECTION_POINTS.END;
+						var noMoreCharInputAllowed = max.toString().length <= value.toString().length && !isNaN(value);
+						//console.log('noMoreCharInputAllowed', noMoreCharInputAllowed, max.toString().length, value);
+
+						if(atEnd && noMoreCharInputAllowed && !this._preventNextInputForOneKeyStroke){
+							if(order === 3){
+								//done
+							}else{
+								var nextInput = Polymer.dom(this.root).querySelector('input[data-order=\''+(order+1)+'\']');
+
+								nextInput.focus();
+							}
+						}
+
+						this._preventNextInputForOneKeyStroke = false;
+					}, 50);
+				},
+
+				_checkInputFieldSwitchPreKey: function(ev){
+					//48 till 57 are numbers
+					//191 is /
+					//32 is space
+					//8 is backspace
+					//13 enter
+					//37 left
+					//39 right
+					var code = ev.keyCode || ev.charCode;
+
+					var target = ev.target;
+					var value = ev.target.valueAsNumber;
+					var order = parseInt(target.dataset.order);
+
+					/*
+					var max = ev.target.max;
+					if(value > max){
+						this._updateValueAndPreserveCaret(target, max);
+					}
+
+					var min = ev.target.min;
+					if(value < min){
+						this._updateValueAndPreserveCaret(target, min);
+					}
+					*/
+
+					var selection = this._getSelectionPoint(target);
+
+					var atEnd = selection === SELECTION_POINTS.END;
+					var nextFieldCharacterPressed = code === 191 || code === 32 || code === 13 || code === 39;
+
+					if(atEnd && nextFieldCharacterPressed){
+						if(order < 3){
+							var nextInput = Polymer.dom(this.root).querySelector('input[data-order=\''+(order+1)+'\']');
+
+							nextInput.focus();
+						}
+					}
+
+					if((selection === SELECTION_POINTS.BEGINNING || isNaN(value)) && (code === 8 || code === 37)){
+						if(order === 1){
+							//nothing
+						}else{
+							var prevInput = Polymer.dom(this.root).querySelector('input[data-order=\''+(order-1)+'\']');
+
+							ev.preventDefault();
+							if(code === 8){
+								if(prevInput.bindValue && prevInput.bindValue.length > 0){
+									prevInput.bindValue = prevInput.bindValue.substr(0, prevInput.bindValue.length - 1);
+								}
+							}else{
+								this._preventNextInputForOneKeyStroke = true;
+							}
+							this._setSelectionAtEndOfField(prevInput);
+						}
+					}
+					//console.log(SELECTION_POINTS,selection);
+					//SELECTION_POINTS
+
+				},
+
+				_setSelectionAtEndOfField: function(el){
+					try{
+						el.selectionStart; //to trigger catch in chrome
+						el.focus();
+						el.selectionStart = el.value.length;
+						el.selectionEnd = el.value.length;
+						//el.focus();
+					}catch(e){
+						this._chromeSucks();
+						el.type = 'text';
+						el.focus();
+						el.type = 'number';
+						/*
+						s = window.getSelection();
+						s.removeAllRanges();
+						var range = document.createRange();
+						range.selectNode(el);
+						s.addRange(range);
+						console.log(s);
+						*/
+					}
+				},
+
+				_getSelectionPoint: function(el){
+					try{
+						if(el.selectionStart === el.selectionEnd){
+							if(el.selectionStart === 0){
+								//BEGINNING
+								return 0;
+							}else if(el.selectionStart === el.value.length){
+								//END
+								return 2;
+							}else{
+								return 1;
+							}
+						}else{
+							return -1;
+						}
+					}catch(e){
+						this._chromeSucks();
+						var s = window.getSelection();
+						if(s.toString().length > 0){
+							return -1;
+						}
+
+						//todo: would be neat to check whether selection in el
+
+						//try moving character forward
+						s.modify('extend', 'forward', 'character');
+						//if we succeed we know we can't be at the end
+						if(s.toString().length > 0){
+							//restore to initial position
+							s.modify('extend', 'backward', 'character');
+							//try going back one more
+							s.modify('extend', 'backward', 'character');
+							//if we succeed we know we can't be at the beginning
+							if(s.toString().length > 0){
+								//restore to initial position
+								s.modify('extend', 'forward', 'character');
+								//MIDDLE
+								return 1;
+							}else{
+								return 0
+							}
+						}else{
+							//END
+							return 2;
+						}
+					}
+				},
+
+				openDatePicker: function(){
+					this.$.picker.open();
+				},
+
+				_updateValueAndPreserveCaret: function(el, newValue){
+					try{
+						var start = el.selectionStart;
+						el.bindValue = newValue;
+						el.selectionStart = start;
+						el.selectionEnd = start;
+					}catch(e){
+						this.chromeSucks();
+						el.bindValue = newValue;
+					}
+				},
+
+				_chromeSucks: function(){
+					if(!chromeSucks){
+						chromeSucks = true;
+						console.warn('chrome sucks: https://code.google.com/p/chromium/issues/detail?id=346270');
+					}
+				},
+
+				_equals: function(a,b){
+					return a === b;
+				},
+
+				_onFocus: function(){
+					this.async(function(){
+						var day = Polymer.dom(this.root).querySelector('input.day');
+						var month = Polymer.dom(this.root).querySelector('input.month');
+						var year = Polymer.dom(this.root).querySelector('input.year');
+						if(!day._focused && !month._focused && !year._focused){
+							day.focus();
+						}
+					}, 50);
+				},
+
+				_handleInputFocus: function(ev){
+					ev.target._focused = true;
+					this.debounce('focusblur', function(){
+						this.floatLabel = true;
+					}, 50);
+					ev.stopPropagation();
+					return false;
+				},
+
+				_handleInputBlur: function(ev){
+					ev.target._focused = false;
+					if(typeof this.value === 'undefined' || this.value*1 == 0){
+						this.debounce('focusblur', function(){
+							this.floatLabel = false;
+						}, 50);
+					}
+					ev.stopPropagation();
+					return false;
+				}
+
+			});
+		})();
+	</script>
+</dom-module>

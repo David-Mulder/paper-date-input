@@ -1,0 +1,73 @@
+<link rel="import" href="../polymer/polymer.html">
+
+<link rel="import" href="../paper-date-picker/paper-date-picker.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-dialog/paper-dialog.html">
+
+<!--
+
+
+@demo demo/index.html
+-->
+
+<dom-module id="paper-date-picker-dialog">
+	<template>
+		<style>
+			:host {
+			}
+		</style>
+
+		<style is="custom-style" include="paper-date-picker-dialog-style">
+			section {
+				margin: 24px;
+			}
+		</style>
+
+		<paper-dialog id="dialog" class="paper-date-picker-dialog" with-backdrop entry-animation="scale-up-animation" exit-animation="fade-out-animation">
+			<paper-date-picker id="picker" date="{{immediateDate}}"></paper-date-picker>
+			<div class="buttons">
+				<paper-button dialog-dismiss>Cancel</paper-button>
+				<paper-button dialog-confirm on-tap="setDate">OK</paper-button>
+			</div>
+		</paper-dialog>
+
+	</template>
+
+	<script>
+		(function(){
+
+			Polymer({
+				is: 'paper-date-picker-dialog',
+
+				properties: {
+					immediateDate: {
+						type: Date,
+						notify: true
+					},
+					date: {
+						type: Date,
+						notify: true
+					}
+				},
+
+				ready: function() {
+				},
+
+				open: function(){
+					console.log('open', this.date, this.date*1);
+					if(this.date*1 > 0){
+						this.set('immediateDate', this.date);
+					}
+					//this.$.picker.set('date', this.date);
+					this.$.dialog.open();
+				},
+
+				setDate: function(){
+					console.log('setting date', this.immediateDate);
+					this.set('date', this.immediateDate);
+				}
+
+			});
+		})();
+	</script>
+</dom-module>
