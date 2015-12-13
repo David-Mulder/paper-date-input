@@ -58,7 +58,6 @@
 				},
 
 				open: function(){
-					console.log('open', this.date, this.date*1);
 					if(this.date*1 > 0){
 						this.set('immediateDate', this.date);
 					}
@@ -67,7 +66,6 @@
 				},
 
 				setDate: function(){
-					console.log('setting date', this.immediateDate);
 					this.set('date', this.immediateDate);
 				}
 
