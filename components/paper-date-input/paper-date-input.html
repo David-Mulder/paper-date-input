@@ -249,6 +249,7 @@
 					return !this.invalid;
 				},
 
+				//post key we want to go to the next field if this field is done
 				_checkInputFieldSwitchPostKey: function(ev){
 					//a debounce is terrible here, but it gets the job done
 					this.debounce('test', function(){
@@ -282,9 +283,10 @@
 
 						var atEnd = selection === SELECTION_POINTS.END;
 						var noMoreCharInputAllowed = max.toString().length <= value.toString().length && !isNaN(value);
+						var inputWasNumerical = code <= 57 && code >= 48;
 						//console.log('noMoreCharInputAllowed', noMoreCharInputAllowed, max.toString().length, value);
 
-						if(atEnd && noMoreCharInputAllowed && !this._preventNextInputForOneKeyStroke){
+						if(atEnd && noMoreCharInputAllowed && inputWasNumerical){
 							if(order === 3){
 								//done
 							}else{
@@ -294,7 +296,7 @@
 							}
 						}
 
-						this._preventNextInputForOneKeyStroke = false;
+						//this._preventNextInputForOneKeyStroke = false;
 					}, 50);
 				},
 
@@ -345,11 +347,14 @@
 
 							ev.preventDefault();
 							if(code === 8){
-								if(prevInput.bindValue && prevInput.bindValue.length > 0){
-									prevInput.bindValue = prevInput.bindValue.substr(0, prevInput.bindValue.length - 1);
+								if(prevInput.bindValue){
+									var strValue = (prevInput.bindValue*1).toString();
+									if(strValue.length > 0){
+										prevInput.bindValue = strValue.substr(0, strValue.length - 1);
+									}
 								}
 							}else{
-								this._preventNextInputForOneKeyStroke = true;
+								//this._preventNextInputForOneKeyStroke = true;
 							}
 							this._setSelectionAtEndOfField(prevInput);
 						}
