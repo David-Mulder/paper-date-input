@@ -23,7 +23,7 @@
 			}
 		</style>
 
-		<paper-dialog id="dialog" class="paper-date-picker-dialog" with-backdrop entry-animation="scale-up-animation" exit-animation="fade-out-animation">
+		<paper-dialog id="dialog" class="paper-date-picker-dialog" with-backdrop entry-animation="scale-up-animation" exit-animation="fade-out-animation" opened="{{opened}}">
 			<paper-date-picker id="picker" date="{{immediateDate}}"></paper-date-picker>
 			<div class="buttons">
 				<paper-button dialog-dismiss>Cancel</paper-button>
@@ -46,6 +46,10 @@
 					},
 					date: {
 						type: Date,
+						notify: true
+					},
+					opened: {
+						type: Boolean,
 						notify: true
 					}
 				},

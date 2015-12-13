@@ -81,11 +81,11 @@
 				</template>
 			</div>
 			<div suffix>
-				<paper-date-picker-dialog id="picker" on-date-changed="_datePickerDateChanged" date="{{value}}"></paper-date-picker-dialog>
 				<iron-icon icon="event" on-tap="openDatePicker"></iron-icon>
 			</div>
 			<paper-input-error>{{errorMessage}}</paper-input-error>
 		</paper-input-container>
+		<paper-date-picker-dialog id="picker" on-date-changed="_datePickerDateChanged" date="{{value}}"></paper-date-picker-dialog>
 	</template>
 
 	<script>
@@ -159,6 +159,7 @@
 					this.set('dateAsObject.day', this.value.getDate());
 					this.set('dateAsObject.month', this.value.getMonth() + 1);
 					this.set('dateAsObject.year', this.value.getFullYear());
+					this.floatLabel = true;
 				},
 				_dateAsObjectChanged: function(ev){
 					var path = ev.path.split('.');
@@ -429,8 +430,12 @@
 					}
 				},
 
-				openDatePicker: function(){
+				openDatePicker: function(ev){
+					console.log('open later?');
 					this.$.picker.open();
+					ev.stopPropagation();
+					ev.preventDefault();
+					return false;
 				},
 
 				_updateValueAndPreserveCaret: function(el, newValue){
@@ -457,14 +462,18 @@
 				},
 
 				_onFocus: function(){
+
+					return; // focus is just a royal pain
+
 					this.async(function(){
 						var day = Polymer.dom(this.root).querySelector('input.day');
 						var month = Polymer.dom(this.root).querySelector('input.month');
 						var year = Polymer.dom(this.root).querySelector('input.year');
-						if(!day._focused && !month._focused && !year._focused){
+						if (!day._focused && !month._focused && !year._focused) {
 							day.focus();
 						}
 					}, 50);
+
 				},
 
 				_handleInputFocus: function(ev){

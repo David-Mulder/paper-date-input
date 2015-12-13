@@ -24,14 +24,13 @@
     "neon-animation": "PolymerElements/neon-animation#~1.0.8",
     "paper-icon-button": "PolymerElements/paper-icon-button#~1.0.6"
   },
-  "_release": "a6dc46bd5a",
+  "_release": "db46e855bf",
   "_resolution": {
     "type": "branch",
     "branch": "master",
-    "commit": "a6dc46bd5ac8e52d5d14985821808baf3524fa42"
+    "commit": "db46e855bf56b195f83d9e564431e8d3e57170a8"
   },
   "_source": "git://github.com/David-Mulder/paper-date-input.git",
   "_target": "master",
-  "_originalSource": "David-Mulder/paper-date-input",
-  "_direct": true
+  "_originalSource": "David-Mulder/paper-date-input"
 }
