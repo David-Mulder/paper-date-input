@@ -328,14 +328,14 @@
 
 					var selection = this._getSelectionPoint(target);
 
-					var atEnd = selection === SELECTION_POINTS.END;
+					var atEnd = selection === SELECTION_POINTS.END || isNaN(value);
 					var nextFieldCharacterPressed = code === 191 || code === 32 || code === 13 || code === 39;
 
 					if(atEnd && nextFieldCharacterPressed){
 						if(order < 3){
 							var nextInput = Polymer.dom(this.root).querySelector('input[data-order=\''+(order+1)+'\']');
-
-							nextInput.focus();
+							ev.preventDefault();
+							this._setSelectionAtStartOfField(nextInput);
 						}
 					}
 
@@ -362,6 +362,18 @@
 					//console.log(SELECTION_POINTS,selection);
 					//SELECTION_POINTS
 
+				},
+
+				_setSelectionAtStartOfField: function(el){
+					try{
+						el.selectionStart; //to trigger catch in chrome
+						el.focus();
+						el.selectionStart = 0;
+						el.selectionEnd = 0;
+						//el.focus();
+					}catch(e){
+						el.focus();
+					}
 				},
 
 				_setSelectionAtEndOfField: function(el){
@@ -437,7 +449,6 @@
 				},
 
 				openDatePicker: function(ev){
-					console.log('open later?');
 					this.$.picker.open();
 					ev.stopPropagation();
 					ev.preventDefault();
